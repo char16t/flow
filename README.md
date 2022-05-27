@@ -61,16 +61,17 @@ val stage2 = Flow.flow(stage1, PerMonth.limit)(PerMonth.keyF, PerMonth.next, Per
 Get result (`stage2`):
 
 ```scala
-Seq(
-      T("CA1", isPin = true,  LocalDateTime.parse("2022-01-01T00:01")),
-      T("CA2", isPin = true,  LocalDateTime.parse("2022-01-01T01:01")),
-      T("CA3", isPin = true,  LocalDateTime.parse("2022-01-01T02:01")),
-      T("CB3", isPin = true,  LocalDateTime.parse("2022-01-02T02:01")),
-      T("CB1", isPin = false, LocalDateTime.parse("2022-03-02T00:01")),
-      T("CB2", isPin = false, LocalDateTime.parse("2022-03-02T01:01")),
-      T("CC1", isPin = false, LocalDateTime.parse("2022-03-03T00:01")),
-      T("CC2", isPin = false, LocalDateTime.parse("2022-03-03T01:01")),
-      T("CC3", isPin = false, LocalDateTime.parse("2022-04-03T02:01")),
-      T("CC4", isPin = false, LocalDateTime.parse("2022-04-03T02:01")),
-)
+stage2.toString
+// List(
+//     T(CA1,true, 2022-01-01T00:01), 
+//     T(CA2,true, 2022-01-01T01:01), 
+//     T(CA3,true, 2022-01-01T02:01), 
+//     T(CB3,true, 2022-01-02T02:01), 
+//     T(CB1,false,2022-03-02T00:01), 
+//     T(CB2,false,2022-03-02T01:01), 
+//     T(CC1,false,2022-03-03T00:01), 
+//     T(CC2,false,2022-03-03T01:01), 
+//     T(CC3,false,2022-04-03T02:01), 
+//     T(CC4,false,2022-04-03T02:01)
+// )
 ```
