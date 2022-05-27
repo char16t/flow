@@ -17,7 +17,8 @@ object Flow {
       map
     })
     val keys = m.keys.toSeq
-    val vals = f2(pairs(m.values.toSeq), limit)
+    val paired = pairs(m.values.toSeq)
+    val vals = if (paired.nonEmpty) f2(paired, limit) else m.values.toSeq
 
     val rest = vals.drop(keys.length)
 
@@ -60,7 +61,7 @@ object Flow {
   }
 
   private def f2(ps: Seq[(Seq[T], Seq[T])], limit: Int): Seq[Seq[T]] = {
-    val pair = ps.indices.foldLeft(Tuple2(Seq[Seq[T]](), ps(0)))((acc, idx) => {
+    val pair = ps.indices.foldLeft(Tuple2(Seq[Seq[T]](), ps.head))((acc, idx) => {
       val i1 = idx
       val i2 = idx + 1
       val tuple = acc._2

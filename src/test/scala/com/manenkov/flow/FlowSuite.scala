@@ -5,6 +5,28 @@ import org.scalatest.funsuite.AnyFunSuite
 import java.time.{LocalDate, LocalDateTime}
 
 class FlowSuite extends AnyFunSuite {
+  test("No split") {
+    object PerDay {
+      val limit = 8
+      def next: LocalDate => LocalDate = _.plusDays(1)
+      def keyF: T => LocalDate = _.due.toLocalDate
+      def updF: (T, LocalDate) => T = (t, key) => t.copy(due = key.atTime(t.due.toLocalTime))
+    }
+    val original = Seq(
+      T("CA1", isPin = true,  LocalDateTime.of(2022, 1, 1, 0, 1)),
+      T("CA2", isPin = true,  LocalDateTime.of(2022, 1, 1, 1, 1)),
+      T("CA3", isPin = true,  LocalDateTime.of(2022, 1, 1, 2, 1)),
+    )
+    val actual = Flow.flow(original, PerDay.limit)(PerDay.keyF, PerDay.next, PerDay.updF)
+    val expected = List(
+      T("CA1",isPin = true, LocalDateTime.parse("2022-01-01T00:01")),
+      T("CA2",isPin = true, LocalDateTime.parse("2022-01-01T01:01")),
+      T("CA3",isPin = true, LocalDateTime.parse("2022-01-01T02:01")),
+    )
+    assertResult(expected.length)(actual.length)
+    expected.zip(actual).foreach(res => assertResult(res._1)(res._2))
+  }
+
   test("Per day") {
     object PerDay {
       val limit = 2
