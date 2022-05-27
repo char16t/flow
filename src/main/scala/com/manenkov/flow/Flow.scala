@@ -31,7 +31,6 @@ object Flow {
     updated.flatMap(pair => {
       val key = pair._1
       val value = pair._2
-      //(key, value.map(t => t.copy(due = key.atTime(t.due.toLocalTime))))
       value.map(updF(_, key))
     })
   }
@@ -54,8 +53,7 @@ object Flow {
         rest = rest.appended(e)
       }
     }
-    // move pinned back
-    p1 = save.filter(!_.isPin) ++ p1.filter(_.isPin)
+    p1 = save
     p2 = rest ++ p2
     (p1, p2)
   }
