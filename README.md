@@ -1,6 +1,6 @@
 # flow for [Assistant](https://github.com/char16t/assistant)
 
-`flow` allows you to automatically reschedule events in the flow depending on the constraints at different time intervals.
+`flow` allows you to automatically reschedule events in the flow depending on the constraints at different time intervals. An alternative experimental implementation of the [Assistant](https://github.com/char16t/assistant) core.
 
 ## Usage
 
@@ -53,14 +53,14 @@ object PerMonth {
 
 Apply:
 
-```
+```scala
 val stage1 = Flow.flow(c, PerDay.limit)(PerDay.keyF, PerDay.next, PerDay.updF)
 val stage2 = Flow.flow(stage1, PerMonth.limit)(PerMonth.keyF, PerMonth.next, PerMonth.updF)
 ```
 
 Get result (`stage2`):
 
-```
+```scala
 Seq(
       T("CA1", isPin = true,  LocalDateTime.parse("2022-01-01T00:01")),
       T("CA2", isPin = true,  LocalDateTime.parse("2022-01-01T01:01")),
