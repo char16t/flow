@@ -11,6 +11,8 @@ there are restrictions:
 * No more than 2 events per day
 * No more than 4 events per month
 
+_(Supported restrictions is `PerDay`, `PerWeek`, `PerMonth`)_
+
 It is necessary to reorganize the sequence so that the sequence meets the requirements.
 
 Defining the sequence:
@@ -33,25 +35,8 @@ val original = Seq(
 Defining restrictions:
 
 ```scala
-object PerDay {
-  val limit = 2
-  def next: LocalDate => LocalDate = _.plusDays(1)
-  def keyF: Event => LocalDate = _.due.toLocalDate
-  def updF: (Event, LocalDate) => Event = (t, key) => t.copy(due = key.atTime(t.due.toLocalTime))
-}
-
-object PerMonth {
-  val limit = 4
-  def keyF: Event => (Int, Int) =
-    t => (t.due.getYear, t.due.getMonth.getValue)
-  def next: ((Int, Int)) => (Int, Int) =
-    ym => {
-      val (year, month) = (ym._1, ym._2)
-      if (month == 12) Tuple2(year + 1, 1) else Tuple2(year, month + 1)
-    }
-  def updF: (Event, (Int, Int)) => Event =
-    (t, ym) => t.copy(due = t.due.withYear(ym._1).withMonth(ym._2))
-}
+val perDay = PerDay(2)
+val perMonth = PerMonth(4)
 ```
 
 Apply:
