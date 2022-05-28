@@ -3,7 +3,7 @@ package com.manenkov.flow
 import java.time.LocalDateTime
 import scala.collection.mutable
 
-case class T(
+case class Event(
               name: String,
               isPin: Boolean = false,
               due: LocalDateTime = LocalDateTime.now(),
@@ -11,9 +11,9 @@ case class T(
 
 object Flow {
 
-  def flow[K](c: Seq[T], limit: Int)(keyF: T => K, next: K => K, updF: (T, K) => T): Seq[T] = {
-    val m = c.sortBy(_.due).foldLeft(mutable.LinkedHashMap[K, Seq[T]]())((map, t) => {
-      map.put(keyF(t), map.getOrElse(keyF(t), Seq[T]()).appended(t))
+  def flow[K](c: Seq[Event], limit: Int)(keyF: Event => K, next: K => K, updF: (Event, K) => Event): Seq[Event] = {
+    val m = c.sortBy(_.due).foldLeft(mutable.LinkedHashMap[K, Seq[Event]]())((map, t) => {
+      map.put(keyF(t), map.getOrElse(keyF(t), Seq[Event]()).appended(t))
       map
     })
     val keys = m.keys.toSeq
@@ -40,12 +40,12 @@ object Flow {
       acc.appended(Tuple2(a(idx), a(idx + 1)))
     })
 
-  private def f(p: (Seq[T], Seq[T]), limit: Int): (Seq[T], Seq[T]) = {
+  private def f(p: (Seq[Event], Seq[Event]), limit: Int): (Seq[Event], Seq[Event]) = {
     var p1 = p._1
     var p2 = p._2
 
-    var save = Seq[T]()
-    var rest = Seq[T]()
+    var save = Seq[Event]()
+    var rest = Seq[Event]()
     for (e <- p1) {
       if (save.length < limit - p1.count(_.isPin) || e.isPin) {
         save = save.appended(e)
@@ -58,8 +58,8 @@ object Flow {
     (p1, p2)
   }
 
-  private def f2(ps: Seq[(Seq[T], Seq[T])], limit: Int): Seq[Seq[T]] = {
-    val pair = ps.indices.foldLeft(Tuple2(Seq[Seq[T]](), ps.head))((acc, idx) => {
+  private def f2(ps: Seq[(Seq[Event], Seq[Event])], limit: Int): Seq[Seq[Event]] = {
+    val pair = ps.indices.foldLeft(Tuple2(Seq[Seq[Event]](), ps.head))((acc, idx) => {
       val i1 = idx
       val i2 = idx + 1
       val tuple = acc._2
