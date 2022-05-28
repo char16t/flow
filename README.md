@@ -13,7 +13,7 @@ there are restrictions:
 * It is preferable to keep the events in the original order
 * If an event cannot be scheduled on the specified date, it must be scheduled as soon as possible
 
-_(Supported restrictions is `PerDay`, `PerWeek`, `PerMonth`)_
+_(Supported restrictions is `PerDay`, `PerWeek`, `PerMonth`, `PerYear`)_
 
 It is necessary to reorganize the sequence so that the sequence meets the requirements.
 
@@ -45,16 +45,16 @@ Get result:
 
 ```scala
 stage2.toString
-// List(
-//     T(CA1,true, 2022-01-01T00:01), 
-//     T(CA2,true, 2022-01-01T01:01), 
-//     T(CA3,true, 2022-01-01T02:01), 
-//     T(CB3,true, 2022-01-02T02:01), 
-//     T(CB1,false,2022-03-02T00:01), 
-//     T(CB2,false,2022-03-02T01:01), 
-//     T(CC1,false,2022-03-03T00:01), 
-//     T(CC2,false,2022-03-03T01:01), 
-//     T(CC3,false,2022-04-03T02:01), 
-//     T(CC4,false,2022-04-03T02:01)
-// )
+//List(
+//  Event(CA1,true, 2022-01-01T00:01), 
+//  Event(CA2,true, 2022-01-01T01:01), 
+//  Event(CA3,true, 2022-01-01T02:01), 
+//  Event(CB3,true, 2022-01-02T02:01), 
+//  Event(CB1,false,2022-02-02T00:01), 
+//  Event(CC1,false,2022-02-03T00:01), 
+//  Event(CB2,false,2022-02-03T01:01), 
+//  Event(CC2,false,2022-02-04T01:01), 
+//  Event(CC3,false,2022-03-04T02:01), 
+//  Event(CC4,false,2022-03-03T02:01)
+//)
 ```

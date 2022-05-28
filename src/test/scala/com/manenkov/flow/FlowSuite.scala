@@ -110,8 +110,8 @@ class FlowSuite extends AnyFunSuite {
       Event("CC4", isPin = false, LocalDateTime.of(2022, 3, 3, 2, 1)),
     )
 
-    val stage1 = Flow.flow(c)(PerMonth(4))
-    val stage2 = Flow.flow(stage1)(PerDay(2))
+    val stage1 = Flow.flow(c)(PerDay(2))
+    val stage2 = Flow.flow(stage1)(PerMonth(4))
 
     val expected = Seq(
       Event("CA1", isPin = true, LocalDateTime.parse("2022-01-01T00:01")),
@@ -127,5 +127,23 @@ class FlowSuite extends AnyFunSuite {
     )
     assertResult(expected.length)(stage2.length)
     expected.zip(stage2).foreach(pair => assertResult(pair._1)(pair._2))
+  }
+
+  test("Per year") {
+    val original = Seq(
+      Event("CA1", isPin = false, LocalDateTime.of(2022, 1, 1, 0, 1)),
+      Event("CA2", isPin = false, LocalDateTime.of(2022, 1, 1, 1, 1)),
+      Event("CA3", isPin = false, LocalDateTime.of(2022, 1, 1, 2, 1)),
+    )
+
+    val actual = Flow.flow(original)(PerYear(2))
+
+    val expected = List(
+      Event("CA1", isPin = false, LocalDateTime.parse("2022-01-01T00:01")),
+      Event("CA2", isPin = false, LocalDateTime.parse("2022-01-01T01:01")),
+      Event("CA3", isPin = false, LocalDateTime.parse("2023-01-01T02:01")),
+    )
+    assertResult(expected.length)(actual.length)
+    expected.zip(actual).foreach(res => assertResult(res._1)(res._2))
   }
 }

@@ -11,16 +11,14 @@ case class Event(
                 )
 
 trait Restriction[K] {
-  def limit: Int
+  val limit: Int
   def next: K => K
   def keyF: Event => K
   def keysRangeF: (K, K) => Seq[K]
   def updF: (Event, K) => Event
 }
 
-class PerDay(lim: Int) extends Restriction[LocalDate] {
-  def limit: Int = lim
-
+class PerDay(val limit: Int) extends Restriction[LocalDate] {
   def next: LocalDate => LocalDate = _.plusDays(1)
 
   def keyF: Event => LocalDate = _.due.toLocalDate
@@ -35,9 +33,7 @@ object PerDay {
   def apply(limit: Int): PerDay = new PerDay(limit)
 }
 
-class PerMonth(lim: Int) extends Restriction[(Int, Int)] {
-  def limit: Int = lim
-
+class PerMonth(val limit: Int) extends Restriction[(Int, Int)] {
   def keyF: Event => (Int, Int) =
     t => (t.due.getYear, t.due.getMonth.getValue)
 
@@ -60,9 +56,7 @@ object PerMonth {
   def apply(limit: Int): PerMonth = new PerMonth(limit)
 }
 
-class PerWeek(lim: Int) extends Restriction[(Int, Int)] {
-  def limit: Int = lim
-
+class PerWeek(val limit: Int) extends Restriction[(Int, Int)] {
   def keyF: Event => (Int, Int) =
     event => (event.due.getYear, event.due.get(WeekFields.ISO.weekOfYear))
 
@@ -91,6 +85,20 @@ object PerWeek {
   def apply(limit: Int): PerWeek = new PerWeek(limit)
 }
 
+class PerYear(val limit: Int) extends Restriction[Int] {
+  override def next: Int => Int = _ + 1
+
+  override def keyF: Event => Int = _.due.getYear
+
+  override def keysRangeF: (Int, Int) => Seq[Int] = (from, to) => (from + 1) until to
+
+  override def updF: (Event, Int) => Event = (e, year) => e.copy(due = e.due.withYear(year))
+}
+
+object PerYear {
+  def apply(limit: Int) = new PerYear(limit)
+}
+
 object Flow {
 
   def flow[K](c: Seq[Event])(restriction: Restriction[K]): Seq[Event] = {
@@ -112,7 +120,11 @@ object Flow {
     })._1
     val keys = m.keys.toSeq
     val paired = pairs(m.values.toSeq)
-    val vals = if (paired.nonEmpty) f2(paired, restriction.limit) else m.values.toSeq
+    val vals =
+      if (paired.nonEmpty)
+        f2(paired, restriction.limit)
+      else
+        f2(Seq((m.values.toSeq.head, Nil)), restriction.limit)
 
     val rest = vals.drop(keys.length)
 
