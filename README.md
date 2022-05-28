@@ -42,8 +42,8 @@ val perMonth = PerMonth(4)
 Apply:
 
 ```scala
-val stage1 = Flow.flow(original, PerDay.limit)(PerDay.keyF, PerDay.next, PerDay.updF)
-val stage2 = Flow.flow(stage1, PerMonth.limit)(PerMonth.keyF, PerMonth.next, PerMonth.updF)
+val stage1 = Flow.flow(original, perDay.limit)(perDay.keyF, perDay.next, perDay.updF)
+val stage2 = Flow.flow(stage1, perMonth.limit)(perMonth.keyF, perMonth.next, perMonth.updF)
 ```
 
 Get result:
