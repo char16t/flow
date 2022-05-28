@@ -34,18 +34,11 @@ val original = Seq(
 )
 ```
 
-Defining restrictions:
-
-```scala
-val perDay = PerDay(2)
-val perMonth = PerMonth(4)
-```
-
 Apply:
 
 ```scala
-val stage1 = Flow.flow(original, perDay.limit)(perDay.keyF, perDay.next, perDay.updF)
-val stage2 = Flow.flow(stage1, perMonth.limit)(perMonth.keyF, perMonth.next, perMonth.updF)
+val stage1 = Flow.flow(original)(PerDay(2))
+val stage2 = Flow.flow(stage1)(PerMonth(4))
 ```
 
 Get result:

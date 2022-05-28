@@ -10,7 +10,17 @@ case class Event(
                   due: LocalDateTime = LocalDateTime.now(),
                 )
 
-class PerDay(val limit: Int) {
+trait Restriction[K] {
+  def limit: Int
+  def next: K => K
+  def keyF: Event => K
+  def keysRangeF: (K, K) => Seq[K]
+  def updF: (Event, K) => Event
+}
+
+class PerDay(lim: Int) extends Restriction[LocalDate] {
+  def limit: Int = lim
+
   def next: LocalDate => LocalDate = _.plusDays(1)
 
   def keyF: Event => LocalDate = _.due.toLocalDate
@@ -25,7 +35,9 @@ object PerDay {
   def apply(limit: Int): PerDay = new PerDay(limit)
 }
 
-class PerMonth(val limit: Int) {
+class PerMonth(lim: Int) extends Restriction[(Int, Int)] {
+  def limit: Int = lim
+
   def keyF: Event => (Int, Int) =
     t => (t.due.getYear, t.due.getMonth.getValue)
 
@@ -48,7 +60,9 @@ object PerMonth {
   def apply(limit: Int): PerMonth = new PerMonth(limit)
 }
 
-class PerWeek(val limit: Int) {
+class PerWeek(lim: Int) extends Restriction[(Int, Int)] {
+  def limit: Int = lim
+
   def keyF: Event => (Int, Int) =
     event => (event.due.getYear, event.due.get(WeekFields.ISO.weekOfYear))
 
@@ -79,17 +93,17 @@ object PerWeek {
 
 object Flow {
 
-  def flow[K](c: Seq[Event])(limit: Int, keyF: Event => K, keysRangeF: (K, K) => Seq[K], next: K => K, updF: (Event, K) => Event): Seq[Event] = {
+  def flow[K](c: Seq[Event])(restriction: Restriction[K]): Seq[Event] = {
     if (c.isEmpty) {
       return c
     }
     val sortedOriginal = c.sortBy(_.due)
-    val m = sortedOriginal.foldLeft((mutable.LinkedHashMap[K, Seq[Event]](), keyF(sortedOriginal.head)))((acc, t) => {
+    val m = sortedOriginal.foldLeft((mutable.LinkedHashMap[K, Seq[Event]](), restriction.keyF(sortedOriginal.head)))((acc, t) => {
       val map = acc._1
       val prevKey = acc._2
-      val currentKey = keyF(t)
+      val currentKey = restriction.keyF(t)
 
-      val rangeOfKeys = keysRangeF(prevKey, currentKey)
+      val rangeOfKeys = restriction.keysRangeF(prevKey, currentKey)
 
       map.addAll(rangeOfKeys.map((_, Seq[Event]())))
 
@@ -98,20 +112,20 @@ object Flow {
     })._1
     val keys = m.keys.toSeq
     val paired = pairs(m.values.toSeq)
-    val vals = if (paired.nonEmpty) f2(paired, limit) else m.values.toSeq
+    val vals = if (paired.nonEmpty) f2(paired, restriction.limit) else m.values.toSeq
 
     val rest = vals.drop(keys.length)
 
-    val updated = keys.zip(vals.take(keys.length)) ++ rest.foldLeft((next(keys.last), Seq[K]()))((acc, _) => {
+    val updated = keys.zip(vals.take(keys.length)) ++ rest.foldLeft((restriction.next(keys.last), Seq[K]()))((acc, _) => {
       val date = acc._1
       val res = acc._2
-      (next(date), res.appended(date))
+      (restriction.next(date), res.appended(date))
     })._2.zip(rest)
 
     updated.flatMap(pair => {
       val key = pair._1
       val value = pair._2
-      value.map(updF(_, key))
+      value.map(restriction.updF(_, key))
     })
   }
 
