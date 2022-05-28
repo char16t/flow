@@ -1,6 +1,6 @@
 package com.manenkov.flow
 
-import java.time.temporal.{ChronoUnit, WeekFields}
+import java.time.temporal.WeekFields
 import java.time.{LocalDate, LocalDateTime}
 import scala.collection.mutable
 
@@ -15,6 +15,9 @@ class PerDay(val limit: Int) {
 
   def keyF: Event => LocalDate = _.due.toLocalDate
 
+  def keysRangeF: (LocalDate, LocalDate) => Seq[LocalDate] =
+    (fromDate, toDate) => next(fromDate).toEpochDay.until(toDate.toEpochDay).map(LocalDate.ofEpochDay)
+
   def updF: (Event, LocalDate) => Event = (t, key) => t.copy(due = key.atTime(t.due.toLocalTime))
 }
 
@@ -25,6 +28,11 @@ object PerDay {
 class PerMonth(val limit: Int) {
   def keyF: Event => (Int, Int) =
     t => (t.due.getYear, t.due.getMonth.getValue)
+
+  def keysRangeF: ((Int, Int), (Int, Int)) => Seq[(Int, Int)] =
+    (from, to) => {
+      LazyList.iterate(from)(next).takeWhile(_ != to).drop(1).toList
+    }
 
   def next: ((Int, Int)) => (Int, Int) =
     ym => {
@@ -43,6 +51,10 @@ object PerMonth {
 class PerWeek(val limit: Int) {
   def keyF: Event => (Int, Int) =
     event => (event.due.getYear, event.due.get(WeekFields.ISO.weekOfYear))
+
+  def keysRangeF: ((Int, Int), (Int, Int)) => Seq[(Int, Int)] = (from, to) => {
+    LazyList.iterate(from)(next).takeWhile(_ != to).drop(1).toList
+  }
 
   def next: ((Int, Int)) => (Int, Int) =
     yw => {
@@ -67,11 +79,23 @@ object PerWeek {
 
 object Flow {
 
-  def flow[K](c: Seq[Event])(limit: Int, keyF: Event => K, next: K => K, updF: (Event, K) => Event): Seq[Event] = {
-    val m = c.sortBy(_.due).foldLeft(mutable.LinkedHashMap[K, Seq[Event]]())((map, t) => {
-      map.put(keyF(t), map.getOrElse(keyF(t), Seq[Event]()).appended(t))
-      map
-    })
+  def flow[K](c: Seq[Event])(limit: Int, keyF: Event => K, keysRangeF: (K, K) => Seq[K], next: K => K, updF: (Event, K) => Event): Seq[Event] = {
+    if (c.isEmpty) {
+      return c
+    }
+    val sortedOriginal = c.sortBy(_.due)
+    val m = sortedOriginal.foldLeft((mutable.LinkedHashMap[K, Seq[Event]](), keyF(sortedOriginal.head)))((acc, t) => {
+      val map = acc._1
+      val prevKey = acc._2
+      val currentKey = keyF(t)
+
+      val rangeOfKeys = keysRangeF(prevKey, currentKey)
+
+      map.addAll(rangeOfKeys.map((_, Seq[Event]())))
+
+      map.put(currentKey, map.getOrElse(currentKey, Seq[Event]()).appended(t))
+      (map, currentKey)
+    })._1
     val keys = m.keys.toSeq
     val paired = pairs(m.values.toSeq)
     val vals = if (paired.nonEmpty) f2(paired, limit) else m.values.toSeq

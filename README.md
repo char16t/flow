@@ -10,6 +10,8 @@ there are restrictions:
 
 * No more than 2 events per day
 * No more than 4 events per month
+* It is preferable to keep the events in the original order
+* If an event cannot be scheduled on the specified date, it must be scheduled as soon as possible
 
 _(Supported restrictions is `PerDay`, `PerWeek`, `PerMonth`)_
 
