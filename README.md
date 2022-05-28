@@ -61,22 +61,7 @@ val stage1 = Flow.flow(original, PerDay.limit)(PerDay.keyF, PerDay.next, PerDay.
 val stage2 = Flow.flow(stage1, PerMonth.limit)(PerMonth.keyF, PerMonth.next, PerMonth.updF)
 ```
 
-Get result (`stage2`):
-
-```scala
-Seq(
-  Event("CA1", isPin = true, LocalDateTime.parse("2022-01-01T00:01")),
-  Event("CA2", isPin = true, LocalDateTime.parse("2022-01-01T01:01")),
-  Event("CA3", isPin = true, LocalDateTime.parse("2022-01-01T02:01")),
-  Event("CB3", isPin = true, LocalDateTime.parse("2022-01-02T02:01")),
-  Event("CB1", isPin = false, LocalDateTime.parse("2022-03-02T00:01")),
-  Event("CB2", isPin = false, LocalDateTime.parse("2022-03-02T01:01")),
-  Event("CC1", isPin = false, LocalDateTime.parse("2022-03-03T00:01")),
-  Event("CC2", isPin = false, LocalDateTime.parse("2022-03-03T01:01")),
-  Event("CC3", isPin = false, LocalDateTime.parse("2022-04-03T02:01")),
-  Event("CC4", isPin = false, LocalDateTime.parse("2022-04-03T02:01")),
-)
-```
+Get result:
 
 ```scala
 stage2.toString
