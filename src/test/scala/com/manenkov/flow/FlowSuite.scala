@@ -1,6 +1,5 @@
 package com.manenkov.flow
 
-import com.manenkov.flow.Flow.{ChangeDue, ChangeOrder}
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.LocalDateTime

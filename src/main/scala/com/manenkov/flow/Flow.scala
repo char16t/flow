@@ -106,15 +106,15 @@ object PerYear {
   def apply(limit: Int) = new PerYear(limit)
 }
 
+trait Change {
+  def id: String
+}
+
+case class ChangeOrder(id: String, from: Int, to: Int) extends Change
+
+case class ChangeDue(id: String, from: LocalDateTime, to: LocalDateTime) extends Change
+
 object Flow {
-
-  trait Change {
-    def id: String
-  }
-
-  case class ChangeOrder(id: String, from: Int, to: Int) extends Change
-
-  case class ChangeDue(id: String, from: LocalDateTime, to: LocalDateTime) extends Change
 
   def diff(a: Seq[Event], b: Seq[Event]): Seq[Change] = {
     def toMap(a: Seq[Event]): Map[String, Event] = {
