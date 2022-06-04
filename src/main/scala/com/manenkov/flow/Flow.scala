@@ -185,7 +185,7 @@ object Flow {
       val key = pair._1
       val value = pair._2
       value.map(restriction.updF(_, key))
-    })
+    }).zipWithIndex.map(eventWithIndex => eventWithIndex._1.copy(order = eventWithIndex._2))
   }
 
   private def pairs[A](a: Seq[A]): Seq[(A, A)] =
