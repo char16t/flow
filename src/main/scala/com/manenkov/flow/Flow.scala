@@ -2,19 +2,26 @@ package com.manenkov.flow
 
 import java.time.temporal.WeekFields
 import java.time.{LocalDate, LocalDateTime}
+import java.util.UUID
 import scala.collection.mutable
 
 case class Event(
+                  id: String = UUID.randomUUID.toString,
                   name: String,
                   isPin: Boolean = false,
                   due: LocalDateTime = LocalDateTime.now(),
+                  order: Int = 0,
                 )
 
 trait Restriction[K] {
   val limit: Int
+
   def next: K => K
+
   def keyF: Event => K
+
   def keysRangeF: (K, K) => Seq[K]
+
   def updF: (Event, K) => Event
 }
 
@@ -100,6 +107,46 @@ object PerYear {
 }
 
 object Flow {
+
+  trait Change {
+    def id: String
+  }
+
+  case class ChangeOrder(id: String, from: Int, to: Int) extends Change
+
+  case class ChangeDue(id: String, from: LocalDateTime, to: LocalDateTime) extends Change
+
+  def diff(a: Seq[Event], b: Seq[Event]): Seq[Change] = {
+    def toMap(a: Seq[Event]): Map[String, Event] = {
+      a.foldLeft(Map[String, Event]())((hmap, evt) => {
+        hmap.updated(evt.id, evt)
+      })
+    }
+
+    val ha = toMap(a)
+    val hb = toMap(b)
+
+    val changes = ha.foldLeft(Seq[Change]())((changes, pair) => pair._2 match {
+      case evt: Event if hb.contains(evt.id) && evt.order != hb(evt.id).order =>
+        changes.appended(
+          ChangeOrder(
+            id = evt.id,
+            from = evt.order,
+            to = hb(evt.id).order
+          )
+        )
+      case evt: Event if hb.contains(evt.id) && evt.due != hb(evt.id).due =>
+        changes.appended(
+          ChangeDue(
+            id = evt.id,
+            from = evt.due,
+            to = hb(evt.id).due
+          )
+        )
+      case _ => changes
+    })
+    changes
+  }
 
   def flow[K](c: Seq[Event])(restriction: Restriction[K]): Seq[Event] = {
     if (c.isEmpty) {
