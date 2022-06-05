@@ -3,6 +3,33 @@
 `flow` allows you to automatically reschedule events in the flow depending on the constraints at different time
 intervals. An alternative experimental implementation of the [Assistant](https://github.com/char16t/assistant) core.
 
+## Build, test and install
+
+Scala `2.12.x`, `2.13.x` and `3.x` are supported.
+
+Build:
+
+```sh
+sbt +compile
+```
+
+Test:
+```sh
+sbt +test
+```
+
+Install:
+
+```sh
+sbt +publishLocal
+```
+
+Add to your `build.sbt`:
+
+```scala
+libraryDependencies += "com.manenkov" %% "flow" % "0.1.0-RC4"
+```
+
 ## Usage
 
 Suppose there is an ordered sequence of events with the date and time for which they are scheduled. At the same time,
