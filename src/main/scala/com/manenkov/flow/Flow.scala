@@ -4,6 +4,7 @@ import java.time.temporal.WeekFields
 import java.time.{LocalDate, LocalDateTime}
 import java.util.UUID
 import scala.collection.mutable
+import ScalaVersionCompat.LazyList
 
 case class Event(
                   id: String = UUID.randomUUID.toString,
@@ -128,20 +129,17 @@ object Flow {
 
     val changes = ha.foldLeft(Seq[Change]())((changes, pair) => pair._2 match {
       case evt: Event if hb.contains(evt.id) && evt.order != hb(evt.id).order =>
-        changes.appended(
-          ChangeOrder(
-            id = evt.id,
-            from = evt.order,
-            to = hb(evt.id).order
-          )
+        changes :+ ChangeOrder(
+          id = evt.id,
+          from = evt.order,
+          to = hb(evt.id).order
         )
+
       case evt: Event if hb.contains(evt.id) && evt.due != hb(evt.id).due =>
-        changes.appended(
-          ChangeDue(
-            id = evt.id,
-            from = evt.due,
-            to = hb(evt.id).due
-          )
+        changes :+ ChangeDue(
+          id = evt.id,
+          from = evt.due,
+          to = hb(evt.id).due
         )
       case _ => changes
     })
@@ -160,9 +158,9 @@ object Flow {
 
       val rangeOfKeys = restriction.keysRangeF(prevKey, currentKey)
 
-      map.addAll(rangeOfKeys.map((_, Seq[Event]())))
+      map ++= rangeOfKeys.map((_, Seq[Event]()))
 
-      map.put(currentKey, map.getOrElse(currentKey, Seq[Event]()).appended(t))
+      map.put(currentKey, map.getOrElse(currentKey, Seq[Event]()) :+ t)
       (map, currentKey)
     })._1
     val keys = m.keys.toSeq
@@ -178,7 +176,7 @@ object Flow {
     val updated = keys.zip(vals.take(keys.length)) ++ rest.foldLeft((restriction.next(keys.last), Seq[K]()))((acc, _) => {
       val date = acc._1
       val res = acc._2
-      (restriction.next(date), res.appended(date))
+      (restriction.next(date), res :+ date)
     })._2.zip(rest)
 
     updated.flatMap(pair => {
@@ -190,7 +188,7 @@ object Flow {
 
   private def pairs[A](a: Seq[A]): Seq[(A, A)] =
     (0 until a.length - 1).foldLeft(Seq[(A, A)]())((acc, idx) => {
-      acc.appended(Tuple2(a(idx), a(idx + 1)))
+      acc :+ Tuple2(a(idx), a(idx + 1))
     })
 
   private def f(p: (Seq[Event], Seq[Event]), limit: Int): (Seq[Event], Seq[Event]) = {
@@ -201,9 +199,9 @@ object Flow {
     var rest = Seq[Event]()
     for (e <- p1) {
       if (save.length < limit - p1.count(_.isPin) || e.isPin) {
-        save = save.appended(e)
+        save = save :+ e
       } else {
-        rest = rest.appended(e)
+        rest = rest :+ e
       }
     }
     p1 = save
@@ -220,9 +218,9 @@ object Flow {
       //    println(s"elem = ${f(tuple)._1}")
       //    println(s"rest = ${f(tuple)._2}")
       if (i2 < ps.length)
-        (acc._1.appended(f(tuple, limit)._1), (f(tuple, limit)._2, ps(i2)._2))
+        (acc._1 :+ f(tuple, limit)._1, (f(tuple, limit)._2, ps(i2)._2))
       else
-        (acc._1.appended(f(tuple, limit)._1), (f(tuple, limit)._2, Nil))
+        (acc._1 :+ f(tuple, limit)._1, (f(tuple, limit)._2, Nil))
     })
     pair._1 ++ pair._2._1.sliding(limit, limit)
   }
